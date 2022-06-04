@@ -5,14 +5,44 @@ export default {
     components: {
       TextBox,
     },
+    data() {
+      return {
+        activeFake: true,
+        activeEnglish: false,
+        mode: 'fake',
+        words: [],
+        
+      }
+    }, 
+    methods: {
+      toggleActive(mode) {
+
+        // 1 - english
+        // 2- fake (default)
+        switch(mode) {
+          case 1:
+              this.activeEnglish = true
+              this.activeFake = false
+              break
+          case 2:
+              this.activeEnglish = false
+              this.activeFake = true
+              break
+        }
+        this.mode = (this.mode == 'fake') ? 'english' : 'fake'
+      }
+    }
     
 }
 </script>
 
 <template>
   <div class="container">
-     <button class="text">Button</button>
-    <TextBox/>
+    <div class="row">
+        <button class="text" :class="{active: activeEnglish}" @click="toggleActive(1)">English</button>
+        <button class="text" :class="{active: activeFake}" @click="toggleActive(2)">Fake</button> 
+    </div>    
+    <TextBox :mode='this.mode'/>
   </div>
 </template>
 
@@ -48,10 +78,20 @@ body {
   min-height: 100vh;
 }
 
+.active {
+  color: var(--active);
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+}
+
 button.text {
   border: none;
   background-color: inherit;
   font-family: var(--font);
+  margin-inline: 1rem;
 }
 
 </style>

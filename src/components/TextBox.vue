@@ -14,11 +14,12 @@
 <script>
 import * as fw from 'fake-words'
 import Word from '../components/Word.vue'
+import english_1k from '../../public/english_1k.json'
 
 export default {
     name: 'TextBox',
     props: {
-        message: String,
+        mode: String,
     },
     data() {
         return {
@@ -28,7 +29,7 @@ export default {
             correct: false,
             active: false,
             keyInput: "",
-            currentIndex: 0
+            currentIndex: 0,
         }
     },
     components: {
@@ -60,7 +61,12 @@ export default {
 
         generate(){
             for (let i = 0; i < 20; i++) {
-                let obj = {'id': i, 'word': fw.word().toLowerCase()}
+                let obj
+                if (this.mode == 'fake')
+                    obj = {'id': i, 'word': fw.word().toLowerCase()}
+                else
+                    obj = {'id': i, 'word': english_1k.words[Math.floor(Math.random() * 997)]}
+
                 if (i == 0)
                     obj.active = 1
                 // let randomWords = await fetch('https://random-words-api.vercel.app/word')
@@ -117,7 +123,14 @@ export default {
 
     created() {
         this.generate()
+    },
+
+    watch: {
+        mode(){
+            this.resetWords()
+        }
     }
+
     
 }
 </script>
