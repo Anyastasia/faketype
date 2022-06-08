@@ -1,7 +1,6 @@
 <script>
 import TextBox from "./components/TextBox.vue"
 export default {
-
     components: {
       TextBox,
     },
@@ -36,7 +35,7 @@ export default {
 
 <template>
   <div class="container">
-    <div class="row">
+    <div class="row my-1">
         <button class="text" :class="{active: activeEnglish}" @click="toggleActive(1)">English</button>
         <button class="text" :class="{active: activeFake}" @click="toggleActive(2)">Fake</button> 
     </div>    
@@ -72,7 +71,6 @@ body {
   justify-content: center;
   align-items: center;
   border-radius: 10px;
-  border: solid 1px black;
   min-height: 100vh;
 }
 
@@ -90,6 +88,10 @@ button.text {
   background-color: inherit;
   font-family: var(--font);
   margin-inline: 1rem;
+}
+
+.my-1 {
+  margin-block-end: 0.5rem;
 }
 
 </style>
