@@ -1,15 +1,13 @@
 <template>
-    <div id="word-container" @keyup.tab.enter="resetWords()">
+    <div id="word-container" @keyup.enter="resetWords()">
         <div id="word-center">  
             <Word v-for="(word) in words" :id="word.id" :class="{'active': word.active, correct: word.correct, incorrect:word.incorrect}"  :word="word.word" :key="word.id">
             </Word>
         </div>
         <p>{{currentSeconds}}</p>
         <div class="input-box">
-            <input type="text" :class="inputClass" ref="inputBox" :id="input" @keyup="checkInput()"  v-model.trim="keyInput" @keypress.once="setTimeout(() => {
-               setCountdown() 
-            }, 100);">
-            <button @click="resetWords()">Reset</button>
+            <input type="text" :class="{'input-incorrect': inputIncorrect}" ref="inputBox" @keydown="checkInput" @keyup="checkCurrentString" v-model.trim="keyInput" @keypress="setCountdown">
+            <button @click="resetWords">Reset</button>
         </div>
         <p v-if="done">Raw: {{raw}}</p>
         <p v-if="done">Net: {{net}}</p>
@@ -26,6 +24,8 @@ export default {
     name: 'TextBox',
     props: {
         mode: String,
+        numberOfWords: Number,
+        timer: Number,
     },
     data() {
         return {
@@ -43,9 +43,10 @@ export default {
             wpm: 0,
             rawWpm: 0,
             accuracy: 0,
-            currentSeconds: 60,
             done: false,
             timerReset: false,
+            timerRunning: false,
+            currentSeconds: 0,
             raw: 0,
             net: 0, 
             accuracy: 0,
@@ -65,23 +66,8 @@ export default {
     },
 
     methods: {
-        async getWords() {
-            try {
-                let arrWords = []
-                for (let i = 0; i < this.totalWords; i++) {
-                    // let randomWords = await fetch('https://random-words-api.vercel.app/word')
-                    let randomWords = await fetch('https://randomwordgenerator.com/fake-word.php')
-                    let [result] = await randomWords.json()
-                    arrWords.push(result.word.toLowerCase())
-                    this.words.push(arrWords[i])
-                }
-            } catch (e) {
-                console.error(e)
-            }
-        },
-
         generate(){
-            for (let i = 0; i < this.totalWords; i++) {
+            for (let i = 0; i < this.numberOfWords; i++) {
                 let obj
                 if (this.mode == 'fake')
                     obj = {'id': i, 'word': fw.word().toLowerCase()}
@@ -90,22 +76,13 @@ export default {
 
                 if (i == 0)
                     obj.active = 1
-                // let randomWords = await fetch('https://random-words-api.vercel.app/word')
-                //arrWords.push(fw.word().toLowerCase())
                 this.words.push(obj)
             }           
         },
 
         resetWords() {
+            this.keyInput = ''
             this.words = []
-            // for (let i = 0; i < 20; i++) {
-            //     let obj = {'id': i, 'word': fw.word().toLowerCase(), 'active': 0}
-            //     // let randomWords = await fetch('https://random-words-api.vercel.app/word')
-            //     //arrWords.push(fw.word().toLowerCase())
-            //     //this.words.push(arrWords[i])
-            //     this.words.push(obj)
-            // }
-            // //this.wordCopy = this.words
             this.generate()
             this.currentIndex = 0
             this.inputIncorrect = false
@@ -114,35 +91,35 @@ export default {
             this.incorrectCharacters = 0
             this.totalCharacters = 0
             this.done = false
-            this.currentSeconds = 60
+            this.timerRunning = false
+            this.currentSeconds = this.timer
             clearInterval(window.timer)
             this.$refs.inputBox.removeEventListener('keypress', this.setCountdown)
             this.$refs.inputBox.addEventListener('keypress', this.setCountdown, {once: true})
-            this.$refs.inputBox.disabled = false
-            this.keyInput = ""
+            this.$refs.inputBox.removeAttribute('disabled')
         },      
 
-        checkInput() {
 
+        checkCurrentString() {
             const index = this.currentIndex
             const yword = this.words[index].word.slice(0, this.keyInput.length)
-            if (this.keyInput != yword) {
-                console.log(this.keyInput)
-                this.inputIncorrect = true
-            } else {
-                this.inputIncorrect = false
+            this.inputIncorrect = (this.keyInput != yword) ? true : false
+
+            if (this.currentIndex == this.numberOfWords - 1 && this.keyInput.length >= this.words[this.currentIndex].word.length) {
+               this.skip()
             }
-            if (this.currentIndex == this.totalWords - 1 && this.keyInput.length >= this.words[this.currentIndex].word.length) {
-                this.$refs.inputBox.disabled = true
-                setTimeout(() => {
-                    this.skip()
-                }, 10)
-                //disable input text
+
+        },
+        checkInput() {
+            if (this.currentIndex == this.numberOfWords - 1 && this.keyInput.length >= this.words[this.currentIndex].word.length) {
+               this.skip()
             }
-            if (event.keyCode == 32 && this.keyInput.length > 0)
-                setTimeout(() => {
-                    this.skip()
-                }, 10)
+
+            if (event.keyCode == 32 && this.keyInput.length > 0) {
+                event.preventDefault()
+                this.skip()
+            }
+
         }, 
 
         skip() {
@@ -155,9 +132,9 @@ export default {
                     if (this.keyInput[x] != yword[x])  this.incorrectCharacters++
                 }
             }
-            this.totalCharacters += (this.currentIndex == this.totalWords - 1) ?  this.keyInput.length : this.keyInput.length + 1// plus 1 for space except for the final word
-            this.keyInput = null
-            if (this.currentIndex == this.totalWords - 1) {
+            this.totalCharacters += (this.currentIndex == this.numberOfWords - 1) ?  this.keyInput.length : this.keyInput.length + 1// plus 1 for space except for the final word
+            
+            if (this.currentIndex == this.numberOfWords - 1) {
                 this.done = true
                 this.words[this.currentIndex].active = 0
             } else {
@@ -165,24 +142,27 @@ export default {
                 this.currentIndex++
                 this.words[this.currentIndex].active = 1
             }
+            this.keyInput = ''
         },
 
         setCountdown() {
-            window.timer = setInterval(()=>{
-                if (this.currentSeconds > 0 && this.done == false) {
-                    this.currentSeconds--
-                } else {    
-                    this.done = true
-                    clearInterval(timer)
-                    this.$refs.inputBox.removeEventListener('keypress', this.setCountdown)
-                    this.$refs.inputBox.addEventListener('keypress', this.setCountdown, {once: true})
-                }
-            }, 1000)
+            if (this.timerRunning == false) {
+                window.timer = setInterval(()=>{
+                    if (this.currentSeconds > 0 && this.done == false) {
+                        this.currentSeconds--
+                    } else {    
+                        this.done = true
+                        clearInterval(timer)
+                    }
+                }, 1000)
+                this.timerRunning = true
+            }
         },
         calculateResults() {
-            // raw: totalCharacter / 5
-            // net: raw - incorrect / time taken
-            this.timeTaken = (Math.abs(this.currentSeconds - 60)) / 60
+            // raw: (totalCharacter / 5) / time taken
+            // error rate: incorrect chars / time taken
+            // net: raw - error rate
+            this.timeTaken = (Math.abs(this.currentSeconds - this.timer)) / this.timer
             let errorRate = this.incorrectCharacters / this.timeTaken
             this.raw = Math.round((this.totalCharacters / 5) / this.timeTaken)
             this.net = Math.round(this.raw - errorRate)
@@ -192,6 +172,7 @@ export default {
     },
 
     created() {
+        this.currentSeconds = this.timer
         this.generate()
     },
 
@@ -199,7 +180,15 @@ export default {
         mode(){
             this.resetWords()
         },
+        timer() {
+            this.resetWords()
+        },
+        numberOfWords() {
+            this.resetWords()
+        },
         done() {
+            if (this.done === true)
+                this.$refs.inputBox.setAttribute('disabled', true)
             this.calculateResults()
         }
     }
@@ -219,7 +208,7 @@ export default {
         display: flex;
         flex-direction: column;
         justify-content: center;
-        background-color: var(--text-center);
+        background-color: inherit;
         align-items: center;
         padding: 1.5rem;
         min-width: 45%;
@@ -286,4 +275,4 @@ export default {
         border-radius: 4px;
     }
 
-</style>cl
+</style>

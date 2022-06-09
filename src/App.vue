@@ -6,27 +6,38 @@ export default {
     },
     data() {
       return {
-        activeFake: true,
-        activeEnglish: false,
+        language: [
+          'english', 'fake',
+        ],
+        timer : [
+          60, 120
+        ],
+        numberOfWords: [
+          10, 25, 50, 100,
+        ],
+        activeMode: false,
+        activeTimer: false,
+        activeNumberOfWords: false,
         mode: 'fake',
+        time: 60,
+        noOfWords: 25,
       }
     }, 
     methods: {
       toggleActive(mode) {
-
-        // 1 - english
-        // 2- fake (default)
-        switch(mode) {
-          case 1:
-              this.activeEnglish = true
-              this.activeFake = false
-              break
-          case 2:
-              this.activeEnglish = false
-              this.activeFake = true
-              break
+        return { 
+          'activeMode': (this.mode === mode)
         }
-        this.mode = (this.mode == 'fake') ? 'english' : 'fake'
+      },
+      toggleTimer(xtime) {
+        return {
+          'activeTimer': (this.time === xtime)
+        }
+      },
+      toggleNumberOfWords(n) {
+        return {
+          'activeNumberOfWords': (this.noOfWords === n)
+        }
       }
     }
     
@@ -35,11 +46,20 @@ export default {
 
 <template>
   <div class="container">
-    <div class="row my-1">
-        <button class="text" :class="{active: activeEnglish}" @click="toggleActive(1)">English</button>
-        <button class="text" :class="{active: activeFake}" @click="toggleActive(2)">Fake</button> 
-    </div>    
-    <TextBox :mode='this.mode'/>
+    <div class="column w-100">
+      <div class="row my-1 center">
+          <button v-for="lang in language" :key="lang" class="text" :class="toggleActive(lang)" @click="mode = lang">{{lang}}</button>
+      </div>
+      <div class="row my-1">
+          <div class="number-words">
+            <button v-for="n in numberOfWords" :key="n" class="text" :class="toggleNumberOfWords(n)" @click="noOfWords = n">{{n}}</button>
+          </div>
+          <div class="time">
+            <button v-for="xtime in timer" :key="xtime" class="text" :class="toggleTimer(xtime)" @click="time = xtime">{{xtime}}</button>
+          </div>
+      </div>
+    </div>
+    <TextBox :mode='mode' :timer="time" :numberOfWords="noOfWords"/>
   </div>
 </template>
 
@@ -74,8 +94,22 @@ body {
   min-height: 100vh;
 }
 
-.active {
+.activeMode {
   color: var(--active);
+}
+
+.activeTimer {
+  color: var(--active);
+}
+
+.activeNumberOfWords {
+  color: var(--active);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  width: 45%;
 }
 
 .row {
@@ -83,6 +117,17 @@ body {
   flex-direction: row;
 }
 
+.center {
+  justify-content: center;
+}
+.number-words {
+  margin-right: auto;
+  padding-inline-start: 1.5rem;
+}
+
+.time {
+  padding-inline-end: 1.5rem;
+}
 button.text {
   border: none;
   background-color: inherit;
@@ -93,5 +138,7 @@ button.text {
 .my-1 {
   margin-block-end: 0.5rem;
 }
+
+
 
 </style>

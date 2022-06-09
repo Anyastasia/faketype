@@ -18,18 +18,6 @@ export default {
         correct: Boolean,
         active: Number,
     },
-    // computed: {
-    //     classObject() {
-    //         return {
-    //             incorrect: this.incorrect,
-    //             correct: this.correct,
-    //             active: this.active
-    //         }
-    //     }
-    // },
-    mounted() {
-        console.log(this.incorrect.incorrect)
-    }
 }
 </script>
 
