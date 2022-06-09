@@ -1,3 +1,4 @@
 # faketype
 
-Typing test with fake english language using fake-words: https://www.npmjs.com/package/fake-words
+Typing test with fake language using fake-words: https://www.npmjs.com/package/fake-words <br>
+Interface inspired with https://typings.gg/
