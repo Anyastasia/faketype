@@ -18,7 +18,7 @@
 <script>
 import * as fw from 'fake-words'
 import Word from '../components/Word.vue'
-import english_1k from '../../public/english_1k.json' 
+import english_1k from './json/english_1k.json' 
 
 export default {
     name: 'TextBox',
